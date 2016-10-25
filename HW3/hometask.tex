@@ -1,0 +1,117 @@
+\documentclass[11pt,a4paper,oneside]{article}
+
+\usepackage[english,russian]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{olymp}
+\usepackage{graphicx}
+\usepackage{expdlist}
+\usepackage{mfpic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{comment}
+%\usepackage{listings}
+\usepackage{epigraph}
+\usepackage{url}
+\usepackage{ulem}
+
+\DeclareMathOperator{\nott}{not}
+
+\begin{document}
+
+\renewcommand{\t}[1]{\mbox{\texttt{#1}}}
+\newcommand{\s}[1]{\mbox{``\t{#1}''}}
+\newcommand{\eps}{\varepsilon}
+\renewcommand{\phi}{\varphi}
+\newcommand{\plainhat}{{\char 94}}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\w}[1]{``\t{#1}''}
+
+\binoppenalty=10000
+\relpenalty=10000
+
+\createsection{\Note}{Комментарий}
+
+\contest{Домашнее задание по базам данных}{Филиппов Дмитрий, М3439}{24 октября 2016 года}
+
+Филиппов Дмитрий, М3439
+\newline
+
+\begin{LARGE} \textbf{Домашнее задание 3.} \end{LARGE}
+\newline
+
+\textbf{Множество атрибутов:} StudentId, StudentName, GroupId, GroupName, CourseId, CourseName, LecturerId, LecturerName, Mark.
+\newline
+
+\textbf{Функциональные зависимости:}
+\begin{itemize}
+\item StudentId $\rightarrow$ StudentName
+\item GroupId $\rightarrow$ GroupName
+\item CourseId $\rightarrow$ CourseName
+\item LecturerId $\rightarrow$ LecturerName
+\item StudentId, CourseId $\rightarrow$ LecturerId, GroupId, Mark
+\end{itemize}
+
+\textbf{Возможные множества ключей:}
+\begin{itemize}
+\item $\{$ StudentId, CourseId $\}$, потому что $\{$ StudentId, CourseId $\}^+$ является полным множеством атрибутов, и меньше множества не существует.
+\end{itemize}
+
+\textbf{Неприводимое множество для данного множества функциональных зависимостей:}
+
+Расщепим правые части:
+
+\begin{itemize}
+\item StudentId $\rightarrow$ StudentName
+\item GroupId $\rightarrow$ GroupName
+\item CourseId $\rightarrow$ CourseName
+\item LecturerId $\rightarrow$ LecturerName
+\item StudentId, CourseId $\rightarrow$ LecturerId
+\item StudentId, CourseId $\rightarrow$ GroupId
+\item StudentId, CourseId $\rightarrow$ Mark
+\end{itemize}
+
+Переходим к процедуре удаления по одному атрибуту из левых частей:
+
+\begin{itemize}
+\item StudentId $\rightarrow$ StudentName
+\item GroupId $\rightarrow$ GroupName
+\item CourseId $\rightarrow$ CourseName
+\item LecturerId $\rightarrow$ LecturerName
+\item StudentId, CourseId $\rightarrow$ LecturerId
+\item StudentId, CourseId $\rightarrow$ Mark
+\item StudentId $\rightarrow$ GroupId
+\end{itemize}
+
+Ненужных зависимостей тут нет. Значит получили неприводимое множество функциональных зависимостей.
+\newline
+
+\begin{LARGE} \textbf{Домашнее задание 4.} \end{LARGE}
+\newline
+
+\textbf{Приведение в 5НФ:}
+
+\textit{1НФ}: \underline{StudentId}, StudentName, GroupId, GroupName, \underline{CourseId}, CourseName, LecturerId, LecturerName, Mark.
+
+\textit{2НФ}: 
+\begin{itemize}
+\item \underline{StudentId}, StudentName~--- StudentName зависит только от StudentId
+\item \underline{StudentId}, GroupId, GroupName~--- GroupId зависит только от StudentId, GroupName~--- от GroupId, с которым все ок
+\item \underline{CourseId}, CourseName~--- CourseName зависит только от CourseId
+\item \underline{StudentId}, \underline{CourseId}, LecturerId, LecturerName, Mark~--- LecturerId зависит от StudentId, CourseId; LecturerName~--- от LecturerId; Mark~--- от StudentId, CourseId
+\end{itemize}
+
+\textit{3НФ}:
+\begin{itemize}
+\item \underline{StudentId}, StudentName
+\item \underline{StudentId}, GroupId
+\item \underline{GroupId}, GroupName
+\item \underline{CourseId}, CourseName
+\item \underline{LecturerId}, LecturerName
+\item \underline{StudentId}, \underline{CourseId}, LecturerId, Mark
+\end{itemize}
+
+\textit{4НФ} и \textit{5НФ} выглядят так же, как и \textit{3НФ}.
+
+\end{document}
