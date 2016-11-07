@@ -1,0 +1,142 @@
+\documentclass[11pt,a4paper,oneside]{article}
+
+\usepackage[english,russian]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{olymp}
+\usepackage{graphicx}
+\usepackage{expdlist}
+\usepackage{mfpic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{comment}
+%\usepackage{listings}
+\usepackage{epigraph}
+\usepackage{MnSymbol,wasysym}
+\usepackage{marvosym}
+\usepackage{url}
+\usepackage{ulem}
+\usepackage{amssymb}
+\usepackage{ifsym}
+
+\DeclareMathOperator{\nott}{not}
+
+\begin{document}
+
+\renewcommand{\t}[1]{\mbox{\texttt{#1}}}
+\newcommand{\s}[1]{\mbox{``\t{#1}''}}
+\newcommand{\eps}{\varepsilon}
+\renewcommand{\phi}{\varphi}
+\newcommand{\plainhat}{{\char 94}}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\w}[1]{``\t{#1}''}
+
+\binoppenalty=10000
+\relpenalty=10000
+
+\createsection{\Note}{Комментарий}
+
+\contest{Домашнее задание по базам данных}{Филиппов Дмитрий, М3439}{1 ноября 2016 года}
+
+Филиппов Дмитрий, М3439
+\newline
+
+\begin{LARGE} \textbf{Домашнее задание 5.} \end{LARGE}
+\newline
+
+\textbf{Схема БД:} Courses(courseId, courseName), Lecturers(lecturerId, lecturerName), Marks(studentId, courseId, mark), Groups(groupId, groupName), Students(studentId, studentName, groupdId), Plan.
+\newline
+
+Запросы:
+
+1. \textbf{Информация о студентах с заданной оценкой по предмету «Базы данных»}
+
+\begin{itemize}
+\item Реляционная алгебра: $\pi_{studentId, studentName, groupId} (\sigma_{mark = fixMark, courseName = \mbox{'Базы данных'}}$ $(Students \bowtie Marks \bowtie Groups \bowtie Courses))$
+\item SQL: SELECT S.studentId, S.studentName, G.groupId FROM (Students S NATURAL JOIN Marks M NATURAL JOIN Groups G NATURAL JOIN Courses C) where (M.mark=fixMark AND C.courseName = 'Базы данных');
+\end{itemize}
+
+2. \textbf{Информация о студентах, не имеющих оценки по предмету «Базы данных»}
+\begin{itemize}
+\item \textbf{Cреди всех студентов}:
+  \begin{itemize}
+  \item Реляционная алгебра: $Students - \pi_{studentId, studentName, groupId} (\sigma_{mark = fixMark, courseName = \mbox{'Базы данных'}}$ $(Students \bowtie Marks \bowtie Groups \bowtie Courses))$
+  \item SQL: SELECT * FROM Students EXCEPT ALL SELECT S.studentId, S.studentName, G.groupId FROM (Students S NATURAL JOIN Marks NATURAL JOIN Groups G M NATURAL JOIN Courses C) where (M.mark=fixMark AND C.courseName = 'Базы данных');
+  \end{itemize}
+\item \textbf{Cреди всех студентов, у которых есть предмет}:
+  \begin{itemize}
+  \item Реляционная алгебра: $Students - \pi_{studentId, studentName, groupId} (\sigma_{mark = fixMark, courseName = \mbox{'Базы данных'}}$ $(Students \bowtie Marks \bowtie Groups \bowtie Courses)) \land$ $(\pi_{studentId, studentName, groupId}$ $(\sigma_{courseName = \mbox{'Базы данных'}}$ $(Students \bowtie Courses \bowtie Groups \bowtie Plan)))$
+  \item SQL: SELECT * FROM Students EXCEPT ALL SELECT S.studentId, S.studentName, G.groupId FROM (Students S NATURAL JOIN Marks M NATURAL JOIN Groups g NATURAL JOIN Courses C) where (M.mark=fixMark AND C.courseName = 'Базы данных') INTERSECT SELECT (S.studentId, S.studentName, G.groupId) FROM (Students S NATURAL JOIN Courses C NATURAL JOIN Groups g NATURAL JOIN Plan P) where C.courseName = 'Базы данных';
+  \end{itemize}
+\end{itemize}
+
+3. \textbf{Информацию о студентах, имеющих хотя бы одну оценку у заданного лектора}
+\begin{itemize}
+\item Реляционная алгебра: $\pi_{studentId, studentName, groupId} (\sigma_{lecturerName = fixLecturerName}$ $(Lecturers \bowtie Marks \bowtie Groups \bowtie Plan))$
+\item SQL: SELECT S.studentId, S.studentName, G.groupId FROM (Lecturers L NATURAL JOIN Marks M NATURAL JOIN Groups G NATURAL JOIN Plan P) where L.lecturerName = fixLecturerName;
+\end{itemize}
+
+4. \textbf{Идентификаторы студентов, не имеющих ни одной оценки у заданного лектора}
+\begin{itemize}
+\item Реляционная алгебра: $\pi_{studentId} (Students - \pi_{studentId, studentName, groupId}$ $(\sigma_{lecturerName = fixLecturerName} (Lecturers \bowtie Marks \bowtie Groups \bowtie Plan)))$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+5. \textbf{Студентов, имеющих оценки по всем предметам заданного лектора}
+\begin{itemize}
+\item Реляционная алгебра: $Students \rtimes \sigma_{lecturerName = fixLecturerName}$ $(Marks \bowtie Courses \bowtie Lecturers \bowtie Plan)$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+6. \textbf{Для каждого студента имя и предметы, которые он должен посещать}
+\begin{itemize}
+\item Реляционная алгебра: $\pi_{studentName, courseName} (Students \bowtie Courses \bowtie Plan)$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+7. \textbf{По лектору всех студентов, у которых он хоть что-нибудь преподавал}
+\begin{itemize}
+\item Реляционная алгебра: $\pi_{studentId, studentName} (\sigma_{lecturerName = fixLecturerName}$ $(Lecturers \bowtie Students \bowtie Plan))$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+8. \textbf{Пары студентов, такие, что все сданные первым студентом предметы сдал и второй студент}
+\begin{itemize}
+\item Реляционная алгебра: $\rho_{studentName=fstudentName, studentId=fstudentId} (\pi_{studentId, studentName, courseId, courseName}$ $(\sigma_{mark >= 60}$ $(Students \bowtie Courses \bowtie Marks)))$ $\divideontimes$ $\rho_{studentName=fstudentName, studentId=fstudentId}$ $(\pi_{studentId, studentName, courseId, courseName}$ $(\sigma_{mark >= 60} (Students \bowtie Courses \bowtie Marks)))$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+9. \textbf{Такие группы и предметы, что все студенты группы сдали предмет}
+\begin{itemize}
+\item Реляционная алгебра: $(\pi_{groupName, studentName} Students) \divideontimes (\pi_{studentName, courseName}$ $(\sigma_{mark \ge 60} Marks))$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+10. \textbf{Средний балл студента}
+\begin{itemize}
+\item \textbf{По идентификатору}:
+  \begin{itemize}
+  \item Реляционная алгебра: $avg_{mark, \emptyset} (\pi_{mark} (\sigma_{studentId = fixStudentId}$ $(Students \bowtie Marks)))$
+  \item SQL: $\frownie{}$
+  \end{itemize}
+\item \textbf{Для каждого студента}:
+  \begin{itemize}
+  \item Реляционная алгебра: $avg_{mark, \{studentId, studentName\}} (\pi_{studentId, studentName, mark}$ $(Students \bowtie Marks))$
+  \item SQL: $\frownie{}$
+  \end{itemize}
+\end{itemize}
+
+11. \textbf{Средний балл средних баллов студентов каждой группы}
+\begin{itemize}
+\item Реляционная алгебра: $\frownie{}$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+12. \textbf{Для каждого студента число предметов, которые у него были, число сданных предметов и число не сданных предметов}
+\begin{itemize}
+\item Реляционная алгебра: $\frownie{}$
+\item SQL: $\frownie{}$
+\end{itemize}
+
+\end{document}
