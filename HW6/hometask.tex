@@ -1,0 +1,209 @@
+\documentclass[11pt,a4paper,oneside]{article}
+
+\usepackage[english,russian]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{olymp}
+\usepackage{graphicx}
+\usepackage{expdlist}
+\usepackage{mfpic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{comment}
+%\usepackage{listings}
+\usepackage{epigraph}
+\usepackage{MnSymbol,wasysym}
+\usepackage{marvosym}
+\usepackage{url}
+\usepackage{ulem}
+\usepackage{amssymb}
+\usepackage{ifsym}
+
+\DeclareMathOperator{\nott}{not}
+
+\begin{document}
+
+\renewcommand{\t}[1]{\mbox{\texttt{#1}}}
+\newcommand{\s}[1]{\mbox{``\t{#1}''}}
+\newcommand{\eps}{\varepsilon}
+\renewcommand{\phi}{\varphi}
+\newcommand{\plainhat}{{\char 94}}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\w}[1]{``\t{#1}''}
+
+\binoppenalty=10000
+\relpenalty=10000
+
+\createsection{\Note}{Комментарий}
+
+\contest{Домашнее задание по базам данных}{Филиппов Дмитрий, М3439}{8 ноября 2016 года}
+
+Филиппов Дмитрий, М3439
+\newline
+
+\begin{LARGE} \textbf{Домашнее задание 6.} \end{LARGE}
+\newline
+
+\textbf{Схема БД:} Courses(CId, GId, CName), Lecturers(LId, LName), Marks(SId, CId, GId, Mark), Groups(GId, GName), Students(SId, GId, SName), Plan(LId, CId, GId).
+\newline
+\textbf{Переменные:} S :: Students, G :: Groups, L :: Lecturers, M : Marks, C : Courses, P :: Plan.
+
+Запросы:
+
+1. \textbf{Информация о студентах с заданной оценкой по предмету «Базы данных»}
+
+\begin{itemize}
+\item Кортежи: select S.SId, S.GId, S.SName from S where $\exists C (\exists M ( C.CName = \mbox{'Базы данных'} \land S.GId = G.GId \land$ $M.SId = S.SId \land M.CId = C.CId \land M.Mark = fixMark))$
+\item Datalog: 
+$StudentWithDBMark(SId, GId, SName) :- Student(SId, GId, SName)$
+\newline
+$StudentWithDBMark(SId, GId, SName) :- Course(CId, GId, CName)$
+\newline
+$StudentWithDBMark(SId, GId, SName) :- Mark(SId, CId, \_, Mark)$
+\newline
+$StudentWithDBMark(SId, GId, SName) :- CName = \mbox{'Базы данных'}, Mark = fixMark$
+
+\item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where exists (select * from C where exists (select * from M where C.CName = 'Базы данных' and S.GId = G.GId and M.SId = S.SId and M.CId = C.CId and M.Mark = fixMark));}
+\end{itemize}
+
+2. \textbf{Информация о студентах, не имеющих оценки по предмету «Базы данных»}
+\begin{itemize}
+\item \textbf{Cреди всех студентов}:
+  \begin{itemize}
+  \item Кортежи: select S.SId, S.GId, S.SName from S where $\forall C (\forall M ( C.CName <> \mbox{'Базы данных'} \lor S.GId <> G.GId$ $\lor M.SId <> S.SId \lor M.CId <> C.CId \lor M.Mark <> fixMark))$
+  \item Datalog: 
+  $StudentWithoutDBMark(SId, GId, SName) :- Student(SId, GId, SName)$
+  \newline
+  $StudentWithoutDBMark(SId, GId, SName) :- Course(CId, GId, CName)$
+  \newline
+  $StudentWithoutDBMark(SId, GId, SName) :- not Mark(SId, CId, \_, Mark)$
+  \newline
+  $StudentWithoutDBMark(SId, GId, SName) :- CName = \mbox{'Базы данных'}$
+
+  \item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where not exists (select * from C where exists (select * from M where C.CName = 'Базы данных' and S.GId = G.GId and M.SId = S.SId and M.CId = C.CId and M.Mark = fixMark));}
+  \end{itemize}
+\item \textbf{Cреди всех студентов, у которых есть предмет}:
+  \begin{itemize}
+  \item Кортежи: select S.SId, S.GId, S.SName from S where $\forall C (\forall M ( C.CName <> \mbox{'Базы данных'} \lor S.GId <> G.GId$ $\lor M.SId <> S.SId \lor M.CId <> C.CId \lor M.Mark <> fixMark)) \land$ $\exists C (\exists P (C.CName = \mbox{'Базы данных'} \land S.GId = P.GId \land P.CId = C.CId))$
+  \item Datalog:  
+  $StudentWithoutDBMark(SId, GId, SName) :- Student(SId, GId, SName)$
+  \newline
+  $StudentWithoutDBMark(SId, GId, SName) :- Course(CId, GId, CName)$
+  \newline
+  $StudentWithoutDBMark(SId, GId, SName) :- not Mark(SId, CId, \_, Mark)$
+  \newline
+  $StudentWithoutDBMark(SId, GId, SName) :- Plan(\_, CId, GId)$
+  \newline
+  $StudentWithoutDBMark(SId, GId, SName) :- CName = \mbox{'Базы данных'}$
+
+  \item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where not exists (select * from C where exists (select * from M where C.CName = 'Базы данных' and S.GId = G.GId and M.SId = S.SId and M.CId = C.CId and M.Mark = fixMark)) and exists (select * from C where exists (select * from P where C.CName = 'Базы данных' and S.GId = P.GId and P.CId = C.CId));}
+  \end{itemize}
+\end{itemize}
+
+3. \textbf{Информацию о студентах, имеющих хотя бы одну оценку у заданного лектора}
+\begin{itemize}
+\item Кортежи: select S.SId, S.GId, S.SName from S where $\exists L (\exists M (\exists P (L.LName = fixLecturerName \land$ $S.GId = G.GId \land M.SId = S.SId \land P.SId = S.SId \land P.LId = L.LId \land$ $P.CId = M.CId \land P.GId = M.GId)))$
+\item Datalog:
+$StudentWithAtLeastOneMark(SId, GId, SName) :- Student(SId, GId, SName)$
+\newline
+$StudentWithAtLeastOneMark(SId, GId, SName) :- Lecturers(LId, LName)$
+\newline
+$StudentWithAtLeastOneMark(SId, GId, SName) :- Mark(SId, \_, GId, \_)$
+\newline
+$StudentWithAtLeastOneMark(SId, GId, SName) :- Plan(LId, CId, GId)$
+\newline
+$StudentWithAtLeastOneMark(SId, GId, SName) :- LName = fixLecturerName$
+
+\item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where exists (select * from L where exists (select * from M where exists (select * from P where (L.LName = fixLecturerName and S.GId = G.GId and M.SId = S.SId and P.SId = S.SId and P.LId = L.LId and P.CId = M.CId and P.GId = M.GId))));}
+\end{itemize}
+
+4. \textbf{Идентификаторы студентов, не имеющих ни одной оценки у заданного лектора}
+\begin{itemize}
+\item Кортежи: select S.SId, S.GId, S.SName from S where $\forall L (\forall M (\forall P (L.LName <> fixLecturerName \lor$ $S.GId <> G.GId \lor M.SId <> S.SId \lor P.SId <> S.SId \lor P.LId <> L.LId \lor$ $P.CId <> M.CId \lor P.GId <> M.GId)))$
+\item Datalog: 
+$StudentsWithNoMarks(SId, GId, SName) :- Student(SId, GId, SName)$
+\newline
+$StudentsWithNoMarks(SId, GId, SName) :- Lecturers(LId, LName)$
+\newline
+$StudentsWithNoMarks(SId, GId, SName) :- not Mark(SId, \_, GId, \_)$
+\newline
+$StudentsWithNoMarks(SId, GId, SName) :- Plan(LId, CId, GId)$
+\newline
+$StudentWithNoMarks(SId, GId, SName) :- LName = fixLecturerName$
+
+\item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where not exists (select * from L where exists (select * from M where exists (select * from P where (L.LName = fixLecturerName and S.GId = G.GId and M.SId = S.SId and P.SId = S.SId and P.LId = L.LId and P.CId = M.CId and P.GId = M.GId))));}
+\end{itemize}
+
+5. \textbf{Всех студентов, имеющих оценки по всем предметам заданного лектора}
+\begin{itemize}
+\item Кортежи: select S.SId, S.GId, S.SName from S where $\exists LCourses (\exists M (M.SId = S.SId \land$ $M.CId = LCourses.CId))$
+LCourses :: select C.CId, C.CName where $\exists L (\exists C (\exists P (L.LName = fixLecturerName \land$ $P.LId = L.LId \land P.CId = C.CId)))$
+\item Datalog: 
+$LCourses(CId, CName) :- Lecturer(LId, LName)$
+\newline
+$LCourses(CId, CName) :- Course(CId, \_, \_)$
+\newline
+$LCourses(CId, CName) :- Plan(LId, CId, \_)$
+\newline
+$LCourses(CId, CName) :- LName = fixLecturerName$
+\newline
+$StudentsWithAllMarks(SId, GId, SName) :- Student(SId, GId, SName)$
+\newline
+$StudentsWithAllMarks(SId, GId, SName) :- LCourses(CId, \_)$
+\newline
+$StudentsWithAllMarks(SId, GId, SName) :- Mark(SId, CId, \_, \_)$
+
+\item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where exists (select * from L where exists (select * from C where exists (select * from P where exists (select * from M where L.LName = fixLecturerName and P.LId = L.LId and P.CId = C.CId and M.SId = S.SId and M.CId = C.CId))));}
+\end{itemize}
+
+6. \textbf{Для каждого студента имя и курсы, которые он должен посещать}
+\begin{itemize}
+\item Кортежи: select S.SName, C.CId, C.CName from S, C where $\exists P (P.CId = C.CId \land P.GId = S.GId)$
+\item Datalog: 
+$StudentsAndCoursesToVisit(SId, GId, SName) :- Student(\_, GId, SName)$
+\newline
+$StudentsAndCoursesToVisit(SId, GId, SName) :- Plan(\_, СId, GId)$
+\newline
+$StudentsAndCoursesToVisit(SId, GId, SName) :- Course(CId, \_, CName)$
+
+\item SQL: \texttt{select (S.SName, C.CId, C.CName) from S, C where exists (select * from P where P.CId = C.CId and P.GId = S.GId);}
+\end{itemize}
+
+7. \textbf{По лектору всех студентов, у которых он хоть что-нибудь преподавал}
+\begin{itemize}
+\item Кортежи: select S.SId, S.GId, S.SName from S where $\exists P (\exists L (L.LName = fixLecturerName \land$ $L.LId = P.LId \land P.GId = S.GId))$
+\item Datalog: 
+$StudentsAndCoursesToVisit(SId, GId, SName) :- Student(SId, GId, SName)$
+\newline
+$StudentsAndCoursesToVisit(SId, GId, SName) :- Plan(LId, \_, GId)$
+\newline
+$StudentsAndCoursesToVisit(SId, GId, SName) :- Lecturer(LId, LName)$
+\newline
+$StudentsAndCoursesToVisit(SId, GId, SName) :- LName = fixLecturerName$
+
+\item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where exists (select * from P where exists (select * from L where L.LName = fixLecturerName and L.LId = P.LId and P.GId = S.GId));}
+\end{itemize}
+
+8. \textbf{Пары студентов, такие, что все сданные первым студентом предметы сдал и второй студент}
+\begin{itemize}
+\item Кортежи: select S1.SId, S1.SName, S2.SId, S2.SName from S, S where $\forall P (\forall M1, M2 :: M (P.CId <> M1.CId \lor$ $P.CId <> M2.CId \lor M1.CId <> S1.CId \lor M1.GId <> S1.GId \lor$ $M1.SId <> S1.SId \lor M.mark < 60 \lor M2.CId <> S2.CId \lor M2.GId <> S2.GId \lor$ $M2.SId <> S2.SId \lor M.mark >= 60))$
+\item Datalog: 
+$PairsOfStudents(SId1, SName1, SId2, SName2) :- Student(SId1, GId1, SName1)$
+\newline
+$PairsOfStudents(SId1, SName1, SId2, SName2) :- Student(SId2, GId2, SName2)$
+\newline
+$PairsOfStudents(SId1, SName1, SId2, SName2) :- Plan(\_, CId, GId1)$
+\newline
+$PairsOfStudents(SId1, SName1, SId2, SName2) :- Plan(\_, CId, GId2)$
+\newline
+$PairsOfStudents(SId1, SName1, SId2, SName2) :- Mark(SId1, CId, GId1, Mark1)$
+\newline
+$PairsOfStudents(SId1, SName1, SId2, SName2) :- Mark(SId2, CId, GId2, Mark2)$
+\newline
+$PairsOfStudents(SId, GId, SName) :- Mark1 < 60, Mark2 >= 60$
+
+\item SQL: \texttt{select S1.SId, S1.SName, S2.GId, S2.SName from S as S1, S as S2 where not exists (select * from P where not exists (select * from M as M1 where not exists (select * from M as M2 where P.CId <> M1.CId or P.CId <> M2.CId or M1.CId <> S1.CId or M1.GId <> S1.GId or M1.SId <> S1.SId or M.mark < 60 or M2.CId <> S2.CId or M2.GId <> S2.GId or M2.SId <> S2.SId or M.mark >= 60)));}
+\end{itemize}
+
+\end{document}
