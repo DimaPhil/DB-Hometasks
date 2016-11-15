@@ -109,7 +109,7 @@ $StudentWithAtLeastOneMark(SId, GId, SName) :- Student(SId, GId, SName)$
 \newline
 $StudentWithAtLeastOneMark(SId, GId, SName) :- Lecturers(LId, LName)$
 \newline
-$StudentWithAtLeastOneMark(SId, GId, SName) :- Mark(SId, \_, GId, \_)$
+$StudentWithAtLeastOneMark(SId, GId, SName) :- Mark(SId, CId, GId, \_)$
 \newline
 $StudentWithAtLeastOneMark(SId, GId, SName) :- Plan(LId, CId, GId)$
 \newline
@@ -122,15 +122,19 @@ $StudentWithAtLeastOneMark(SId, GId, SName) :- LName = fixLecturerName$
 \begin{itemize}
 \item Кортежи: select S.SId, S.GId, S.SName from S where $\forall L (\forall M (\forall P (L.LName <> fixLecturerName \lor$ $S.GId <> G.GId \lor M.SId <> S.SId \lor P.SId <> S.SId \lor P.LId <> L.LId \lor$ $P.CId <> M.CId \lor P.GId <> M.GId)))$
 \item Datalog: 
-$StudentsWithNoMarks(SId, GId, SName) :- Student(SId, GId, SName)$
+$StudentsWithMarks(SId, GId, SName) :- Student(SId, GId, SName)$
 \newline
-$StudentsWithNoMarks(SId, GId, SName) :- Lecturers(LId, LName)$
+$StudentsWithMarks(SId, GId, SName) :- Lecturers(LId, LName)$
 \newline
-$StudentsWithNoMarks(SId, GId, SName) :- not Mark(SId, \_, GId, \_)$
+$StudentsWithMarks(SId, GId, SName) :- Mark(SId, CId, GId, \_)$
 \newline
-$StudentsWithNoMarks(SId, GId, SName) :- Plan(LId, CId, GId)$
+$StudentsWithMarks(SId, GId, SName) :- Plan(LId, CId, GId)$
 \newline
-$StudentWithNoMarks(SId, GId, SName) :- LName = fixLecturerName$
+$StudentWithMarks(SId, GId, SName) :- LName = fixLecturerName$
+\newline
+$NotStudentsWithMarks(SId, GId, SName) :- not StudentsWithMarks(SId, GId, SName)$
+\newline
+$StudentsWithNoMarks(SId, GId, SName) :- Students(SId, GId, SName)$
 
 \item SQL: \texttt{select (S.SId, S.GId, S.SName) from S where not exists (select * from L where exists (select * from M where exists (select * from P where (L.LName = fixLecturerName and S.GId = G.GId and M.SId = S.SId and P.SId = S.SId and P.LId = L.LId and P.CId = M.CId and P.GId = M.GId))));}
 \end{itemize}
