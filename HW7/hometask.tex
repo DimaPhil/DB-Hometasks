@@ -1,0 +1,247 @@
+\documentclass[11pt,a4paper,oneside]{article}
+
+\usepackage[english,russian]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{olymp}
+\usepackage{graphicx}
+\usepackage{expdlist}
+\usepackage{mfpic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{comment}
+\usepackage{listings}
+\usepackage{epigraph}
+\usepackage{MnSymbol,wasysym}
+\usepackage{marvosym}
+\usepackage{url}
+\usepackage{ulem}
+\usepackage{amssymb}
+\usepackage{ifsym}
+
+\DeclareMathOperator{\nott}{not}
+
+\begin{document}
+
+\renewcommand{\t}[1]{\mbox{\texttt{#1}}}
+\newcommand{\s}[1]{\mbox{``\t{#1}''}}
+\newcommand{\eps}{\varepsilon}
+\renewcommand{\phi}{\varphi}
+\newcommand{\plainhat}{{\char 94}}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\w}[1]{``\t{#1}''}
+
+\binoppenalty=10000
+\relpenalty=10000
+
+\createsection{\Note}{Комментарий}
+
+\contest{Домашнее задание по базам данных}{Филиппов Дмитрий, М3439}{21 ноября 2016 года}
+
+Филиппов Дмитрий, М3439
+\newline
+
+\begin{LARGE} \textbf{Домашнее задание 7.} \end{LARGE}
+\newline
+
+\textbf{Схема БД:} Course(\underline{CId}, GId, CName), Lecturer(\underline{LId}, LName), Mark(\underline{SId}, \underline{CId}, GId, Mark), Groups(\underline{GId}, GName), Student(\underline{SId}, GId, SName), Plan(LId, \underline{CId}, \underline{GId}).
+\newline
+
+Запросы:
+
+1. \textbf{Напишите запрос, удаляющий всех студентов, не имеющих долгов.}
+
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    DELETE FROM
+        Student S 
+    WHERE
+        NOT EXISTS
+        (SELECT * FROM
+            Mark M 
+         WHERE 
+            M.SId = S.SId AND M.Mark < 60);
+\end{lstlisting}
+
+2. \textbf{Напишите запрос, удаляющий всех студентов, имеющих 3 и более долгов.}
+
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    DELETE FROM
+        Student S
+    WHERE
+        (SELECT COUNT(*) FROM
+            (SELECT * FROM
+                Mark M
+             WHERE 
+                M.SId = S.SId AND M.Mark < 60
+            ) as debts) >= 3;
+\end{lstlisting}
+
+3. \textbf{Напишите запрос, удаляющий все группы, в которых нет студентов.}
+
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    DELETE FROM
+        Groups G
+    WHERE
+        NOT EXISTS
+        (SELECT * FROM
+            Student S
+         WHERE S.GId = G.GId);
+\end{lstlisting}
+
+4. \textbf{Создайте view Losers в котором для каждого студента, имеющего долги указано их количество.}
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    CREATE VIEW
+        Losers
+    AS
+        SELECT
+            S.SId, S.SName,
+            (SELECT COUNT(*) FROM
+                (SELECT * FROM
+                    Mark M
+                 WHERE 
+                    M.SId = S.SId AND M.Mark < 60
+                ) as debts_info) as debts_count
+        FROM
+            Student S;
+\end{lstlisting}
+
+5. \textbf{Создайте таблицу LoserT, в которой содержится та же информация, что во view Losers. Эта таблица должна автоматически обновляться при изменении таблицы с баллами.}
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    SELECT * INTO LoserT FROM Losers;
+
+    CREATE FUNCTION updateLoserT()
+        RETURNS TRIGGER AS $BODY$
+    BEGIN
+        TRUNCATE LoserT;
+        INSERT INTO LoserT (SELECT * FROM Losers);
+        RETURN NEW;
+    END;
+    $BODY$ LANGUAGE plpgsql;
+
+    CREATE TRIGGER UpdateLoserT
+    AFTER INSERT OR UPDATE ON Mark
+    FOR EACH ROW EXECUTE PROCEDURE updateLoserT();
+\end{lstlisting}
+
+6. \textbf{Отключите автоматическое обновление таблицы LoserT.}
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    DROP TRIGGER UpdateLoserT ON Mark; 
+\end{lstlisting}
+
+или же
+
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    ALTER TABLE Mark DISABLE TRIGGER UpdateLoserT;
+\end{lstlisting}
+
+(с возможностью последующего включения с помощью \texttt{ALTER TABLE Mark ENABLE TRIGGER UpdateLoserT;})
+
+7. \textbf{Напишите запрос (один), которой обновляет таблицу LoserT, используя данные из таблицы NewPoints, в которой содержится информация о баллах, проставленных за последний день.}
+
+Будем считать, что таблица NewPoints содержит поля \texttt{SId INT}, \texttt{SName VARCHAR(45)}, \texttt{CId INT}, \texttt{Mark INT}.
+
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    MERGE INTO LoserT LT
+    USING (SELECT * FROM NewPoints NP, Mark M) NPM
+    ON LT.SId = NPM.SId AND M.CId = NPM.CId
+    WHEN MATCHED THEN
+        UPDATE SET LT.debts_count = 
+            CASE 
+                WHEN M.Mark < 60 AND NPM.Mark >= 60 THEN LT.debts_count - 1
+                WHEN M.Mark >= 60 AND NPM.Mark < 60 THEN LT.debts_count + 1
+                ELSE LT.debts_count
+            END
+    WHEN NOT MATCHED THEN
+        IF NPM.Mark < 60 THEN
+            INSERT VALUES (NPM.SId, NPM.SName, 1);
+        ELSE
+            INSERT VALUES (NPM.SID, NPM.SName, 0);
+        END IF;
+\end{lstlisting}
+
+8. \textbf{Добавьте проверку того, что все студенты одной группы изучают один и тот же набор курсов.}
+
+    В нашей схеме базы данных эта проверка не нужна, потому что нельзя добавить данные, не удовлетворяющие этому условию, в базу: таблица $Plan$ хранит $LId$, $CId$, $GId$, но не $SId$, поэтому все студенты группы $GId$ (а каждый студент привязан к своей группе) обучаются по этому плану, и все предметы у них одинаковые. При добавлении же в $Mark$ добавить данные, не удовлетворяющие условию, тоже не получится, потому что там $(CId, GId)$~--- primary key, а $(SId, GId)$~--- foreign key.
+
+9. \textbf{Создайте триггер, не позволяющий уменьшить баллы студента по предмету. При попытке такого изменения, баллы изменяться не должны.}
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=none,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+    CREATE FUNCTION DontAllowToDecreaseMarks()
+        RETURNS TRIGGER AS $BODY$
+    BEGIN
+        IF NEW.Mark < OLD.Mark THEN
+            RETURN OLD;
+        END IF;
+        RETURN NEW;
+    END;
+    $BODY$ LANGUAGE plpgsql;
+
+    CREATE TRIGGER DontAllowToDecreaseMarks
+    BEFORE UPDATE ON Mark
+    FOR EACH ROW EXECUTE PROCEDURE DontAllowToDecreaseMarks();
+\end{lstlisting}
+
+\end{document}
