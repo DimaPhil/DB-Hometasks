@@ -2,6 +2,7 @@ CREATE INDEX LoginIndex ON Account USING HASH (login);
 CREATE INDEX ConcertDateIndex ON Concert USING HASH (concert_date);
 CREATE INDEX ConcertCityIndex ON Concert USING HASH (concert_city);
 CREATE INDEX GenreIndex ON Genre USING HASH (genre);
+CREATE INDEX ScrobbleIndex ON Scrobble USING HASH (login);
 
 CREATE EXTENSION btree_gist;
 CREATE INDEX BandNameIndex ON Band USING GIST (band_name);
@@ -11,3 +12,4 @@ CREATE INDEX ConcertTitleIndex ON Concert USING GIST (title);
 
 CREATE INDEX ArtistFullNameIndex ON Artist USING BTREE (first_name, last_name);
 CREATE INDEX BandGenreIndex ON BandGenre USING BTREE (band_id, genre);
+CREATE INDEX ContractIndex ON Contract USING BTREE (band_id, artist_id);

@@ -138,4 +138,11 @@ GROUP BY album_id, band_name, album_name
 ORDER BY band_name
 LIMIT 15;
 
--- 14. 
+-- 14. The most popular genre in lastfm
+
+SELECT bg.genre,
+       COUNT(*) as band_genre_count
+FROM BandGenre bg
+GROUP BY bg.genre
+ORDER BY band_genre_count DESC
+LIMIT 1;

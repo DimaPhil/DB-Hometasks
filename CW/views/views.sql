@@ -31,9 +31,24 @@ CREATE VIEW BandListGenres AS (
     GROUP BY bg.band_name
 );
 
+CREATE VIEW BandTableGenres AS (
+    SELECT bg.band_name,
+           bg.genre
+    FROM (BandGenre NATURAL JOIN Band) bg
+);
+
 CREATE VIEW BandListArtists AS (
     SELECT bca.band_name,
            string_agg(CONCAT(bca.first_name, ' ', bca.last_name), ', ') as artists
     FROM (Band NATURAL JOIN Contract NATURAL JOIN Artist) bca
     GROUP BY bca.band_name
+);
+
+CREATE VIEW BandTableArtists AS (
+    SELECT bca.band_name,
+           bca.first_name,
+           bca.last_name
+    FROM (Band 
+          NATURAL JOIN Contract
+          NATURAL JOIN Artist) bca
 );
