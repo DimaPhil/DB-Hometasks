@@ -100,4 +100,35 @@ $BODY$ LANGUAGE plpgsql;
 
 CREATE TRIGGER ActiveUsersUpdate
 AFTER INSERT ON Scrobble
-FOR EACH ROW EXECUTE PROCEDURE updateActiveUsers()
+FOR EACH ROW EXECUTE PROCEDURE updateActiveUsers();
+
+-- Trigger for checking intervals [scrobble_time, scrobble_time + duration don't intersect
+
+CREATE OR REPLACE FUNCTION intervalsIntersectionCheck()
+    RETURNS TRIGGER AS $BODY$
+DECLARE
+    _duration INTERVAL;
+    _track_id INT DEFAULT NULL;
+BEGIN
+    SELECT duration
+    INTO _duration
+    FROM Track
+    WHERE NEW.track_id = track_id;
+
+    SELECT s.track_id
+    INTO _track_id
+    FROM (Scrobble NATURAL JOIN Track) s
+         WHERE s.login = NEW.login AND
+               GREATEST(s.scrobble_time, NEW.scrobble_time) < LEAST(s.scrobble_time + s.duration, NEW.scrobble_time + _duration)
+    LIMIT 1;
+    IF _track_id IS NULL THEN
+        RETURN NEW;
+    ELSE
+        RETURN NULL;
+    END IF;
+END;
+$BODY$ LANGUAGE plpgsql;
+
+CREATE TRIGGER IntervalsIntersectionCheck
+AFTER INSERT OR UPDATE ON Scrobble
+FOR EACH ROW EXECUTE PROCEDURE intervalsIntersectionCheck();

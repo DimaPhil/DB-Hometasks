@@ -5,8 +5,8 @@ CREATE DATABASE lastfm;
 CREATE TABLE Account (
     login VARCHAR(30) NOT NULL,
     password_hash VARCHAR(30) NOT NULL,
-    fname VARCHAR(30) NOT NULL CHECK (SUBSTRING(fname FROM 1 FOR 1) != LOWER(SUBSTRING(fname FROM 1 FOR 1))),
-    lname VARCHAR(30) NOT NULL CHECK (SUBSTRING(lname FROM 1 FOR 1) != LOWER(SUBSTRING(lname FROM 1 FOR 1))),
+    fname VARCHAR(30) NOT NULL,
+    lname VARCHAR(30) NOT NULL,
     country VARCHAR(30) DEFAULT 'Russia',
     city VARCHAR(30) DEFAULT 'St. Petersburg',
     PRIMARY KEY(login),
@@ -51,8 +51,8 @@ CREATE TABLE Scrobble (
 
 CREATE TABLE Artist (
     artist_id INT NOT NULL,
-    first_name VARCHAR(30) NOT NULL CHECK (SUBSTRING(first_name FROM 1 FOR 1) != LOWER(SUBSTRING(first_name FROM 1 FOR 1))),
-    last_name VARCHAR(30) NOT NULL CHECK (SUBSTRING(last_name FROM 1 FOR 1) != LOWER(SUBSTRING(last_name FROM 1 FOR 1))),
+    first_name VARCHAR(30) NOT NULL,
+    last_name VARCHAR(30) NOT NULL,
     birthday DATE NOT NULL CHECK (birthday < NOW()),
     death DATE CHECK (death IS NULL OR birthday < death),
     PRIMARY KEY(artist_id)

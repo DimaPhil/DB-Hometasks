@@ -1,7 +1,7 @@
 -- 1. Users and number of scrobbles they made in descending order of scrobbles, then in ascending order of login
 
 SELECT login,
-       userScrobbles(login) as scrobbles
+       COUNT(*) as scrobbles
 FROM AccountScrobbles
 GROUP BY login
 ORDER BY scrobbles DESC, login;
@@ -12,7 +12,7 @@ ORDER BY scrobbles DESC, login;
 SELECT band_name as band,
        album_name as album,
        track_name as track,
-       trackScrobbles(track_id) as scrobbled
+       COUNT(*) as scrobbled
 FROM Band 
      NATURAL JOIN Album 
      NATURAL JOIN Track
@@ -25,7 +25,7 @@ LIMIT 10;
 
 SELECT login,
        band_name as band,
-       bandScrobbles(band_id) as scrobbles
+       COUNT(*) as scrobbles
 FROM Account
      NATURAL JOIN Band
      NATURAL JOIN Track
@@ -36,7 +36,7 @@ ORDER BY login, scrobbles DESC;
 -- 4. Band and summary number of scrobbles for it ordered scrobbles in descending order, then by band_name
 
 SELECT band_name as band,
-       bandScrobbles(band_id) as scrobbles
+       COUNT(*) as scrobbles
 FROM Band
      NATURAL JOIN Track
      NATURAL JOIN Scrobble
@@ -146,3 +146,33 @@ FROM BandGenre bg
 GROUP BY bg.genre
 ORDER BY band_genre_count DESC
 LIMIT 1;
+
+-- 15. The list of tracks that are scrobbling by at least 10 people now
+
+CREATE OR REPLACE FUNCTION countAccountsListening(tr_id INT, sc_time TIMESTAMP)
+RETURNS INT AS $BODY$
+DECLARE
+  result INT;
+BEGIN
+  SELECT COUNT(*)
+  INTO result
+  FROM (Scrobble NATURAL JOIN Track) st
+  WHERE st.track_id = tr_id AND
+        st.scrobble_time <= sc_time AND
+        sc_time <= st.scrobble_time + st.duration
+  GROUP BY track_id;
+  RETURN result;
+END;
+$BODY$ LANGUAGE plpgsql;
+
+SELECT DISTINCT 
+    track_id as id,
+    track_name as track
+FROM Scrobble NATURAL JOIN Track
+WHERE EXISTS (
+      SELECT st.scrobble_time
+      FROM (Scrobble NATURAL JOIN Track) st
+      WHERE st.track_id = track_id AND 
+            countAccountsListening(track_id, st.scrobble_time) >= 10
+  )
+ORDER BY track_id;
